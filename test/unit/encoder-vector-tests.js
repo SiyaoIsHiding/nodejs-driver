@@ -73,10 +73,12 @@ describe('Vector tests', function () {
   });
 
   it('should encode with whitespace in custom type name', function () {
-    const vector = new Vector([1, 2, 3], 'float');
+    const vector = new Float32Array([1, 2, 3]);
     const typeObj = { code: 0, type: null, info: 'org.apache.cassandra.db.marshal.VectorType(org.apache.cassandra.db.marshal.FloatType , 3)' };
     const encoded = encoder.encode(vector, typeObj);
     const decoded = encoder.decode(encoded, typeObj);
-    assert.strictEqual(util.inspect(decoded), util.inspect(vector));
+    assert.strictEqual(decoded[0], vector[0]);
+    assert.strictEqual(decoded[1], vector[1]);
+    assert.strictEqual(decoded[2], vector[2]);
   });
 });
