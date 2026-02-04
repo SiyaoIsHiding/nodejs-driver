@@ -35,26 +35,26 @@ jobs:
           ./setup.py install
       
       # ---- Install required Zulu JDKs (8/11/17) and capture their homes ----
-      - name: Install Zulu 8
-        id: z8
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: '8'
-
       - name: Install Zulu 11
         id: z11
         uses: actions/setup-java@v5
         with:
           distribution: zulu
           java-version: '11'
-          
+
       - name: Install Zulu 17
         id: z17
         uses: actions/setup-java@v5
         with:
           distribution: zulu
           java-version: '17'
+
+      - name: Install Zulu 8
+        id: z8
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '8'
 
       - name: Export JAVA*_HOME variables
         run: |
