@@ -3,7 +3,7 @@ name: Unit and Integration Tests for Apache Cassandra NodeJS Driver
 on:
   push:
   pull_request:
-  workflow_dispatch:   # allow manual trigger from Actions  page
+  workflow_dispatch: # allow manual trigger from Actions  page
 permissions:
   contents: read
   actions: read
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python 3.9.16
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9.16'
+          python-version: "3.9.16"
 
       - name: Install ccm
         run: |
@@ -33,28 +33,28 @@ jobs:
           cd cassandra-ccm
           pip install -r requirements.txt
           ./setup.py install
-      
+
       # ---- Install required Zulu JDKs (8/11/17) and capture their homes ----
       - name: Install Zulu 11
         id: z11
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: '11'
+          java-version: "11"
 
       - name: Install Zulu 17
         id: z17
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: '17'
+          java-version: "17"
 
       - name: Install Zulu 8
         id: z8
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: '8'
+          java-version: "8"
 
       - name: Export JAVA*_HOME variables
         run: |
@@ -63,6 +63,53 @@ jobs:
           echo "JAVA17_HOME=${{ steps.z17.outputs.path }}" >> "$GITHUB_ENV"
           echo "JAVA_HOME=${{ steps.z8.outputs.path }}"    >> "$GITHUB_ENV"
 
+      - name: Generate SSL certificates
+        run: |
+          mkdir -p /home/runner/workspace/tools/ccm/ssl/
+          cd /home/runner/workspace/tools/ccm/ssl/
+          keytool -genkey \
+            -keyalg RSA \
+            -alias cassandra \
+            -keystore keystore.jks \
+            -storepass cassandra \
+            -keypass cassandra \
+            -validity 364635 \
+            -dname "CN=Philip Thompson, OU=TE, O=DataStax, L=Santa Clara, ST=CA, C=TE"
+          keytool -export \
+            -alias cassandra \
+            -file cassandra.crt \
+            -keystore keystore.jks \
+            -storepass cassandra
+          openssl x509 \
+            -inform der \
+            -in cassandra.crt \
+            -out cassandra.pem
+          keytool -genkeypair \
+            -keyalg RSA \
+            -alias client \
+            -keystore truststore.jks \
+            -storepass cassandra \
+            -keypass cassandra \
+            -validity 364635 \
+            -dname "CN=Philip Thompson, OU=TE, O=DataStax, L=Santa Clara, ST=CA, C=TE"
+          keytool -importkeystore \
+            -srckeystore truststore.jks \
+            -destkeystore client.p12 \
+            -srcstorepass cassandra \
+            -deststorepass cassandra \
+            -deststoretype PKCS12
+          openssl pkcs12 \
+            -in client.p12 \
+            -passin pass:cassandra \
+            -nokeys \
+            -out client_cert.pem -legacy
+          openssl pkcs12 \
+            -in client.p12 \
+            -passin pass:cassandra \
+            -nodes \
+            -nocerts \
+            -out client_key.pem -legacy
+
       - name: Install Simulacron
         run: |
           wget https://github.com/datastax/simulacron/releases/download/0.12.0/simulacron-standalone-0.12.0.jar -O /home/runner/simulacron.jar
@@ -70,21 +117,21 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      # ---- Print env vars before build ----
+          node-version: "20"
+          cache: "npm"
+
       - name: Print environment
         run: printenv | sort
 
       - name: Run tests
         run: |
           npm install
-          npx mocha test/unit test/integration/short --recursive --exit --reporter json --reporter-option output=test-results.json                       
-      
+          npx mocha test/unit test/integration/short --recursive --exit --reporter json --reporter-option output=test-results.json
+
       - name: Test Report
         uses: dorny/test-reporter@v2
-        if: ${{ !cancelled() }}       # run this step even if previous step failed
+        if: ${{ !cancelled() }}
         with:
-          name: Mocha Tests            # Name of the check run which will be created
-          path: test-results.json    # Path to test results
-          reporter: mocha-json        # Format of test results
+          name: Mocha Tests
+          path: test-results.json
+          reporter: mocha-json
