@@ -3,7 +3,7 @@ name: Unit and Integration Tests for Apache Cassandra NodeJS Driver
 on:
   push:
   pull_request:
-  workflow_dispatch: # allow manual trigger from Actions  page
+  workflow_dispatch: # allow manual trigger from Actions page
 permissions:
   contents: read
   actions: read
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        NODE_VERSION: ["20", "22", "24"] # JDK used for TEST phase
+        NODE_VERSION: ["20", "22", "24"]
         SERVER_VERSION: ["3.11", "4.0", "4.1", "5.0"] # Cassandra minor versions
       fail-fast: false
 
@@ -143,10 +143,30 @@ jobs:
           npm install
           npx mocha test/unit test/integration/short --recursive --exit --reporter json --reporter-option output=test-results.json
 
-      - name: Test Report
-        uses: dorny/test-reporter@v2
-        if: ${{ !cancelled() }}
+      - name: Upload Test Results
+        if: (!cancelled())
+        uses: actions/upload-artifact@v4
         with:
-          name: Mocha Tests
+          name: Test Results (Node.js ${{ matrix.NODE_VERSION }}, Cassandra ${{ matrix.SERVER_VERSION }})
           path: test-results.json
-          reporter: mocha-json
+
+  publish-test-results:
+    name: "Publish Tests Results"
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+
+    if: (!cancelled())
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.json"
