@@ -12,10 +12,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      matrix:
+        NODE_VERSION: ["20", "22", "24"] # JDK used for TEST phase
+        SERVER_VERSION: ["3.11", "4.0", "4.1", "5.0"] # Cassandra minor versions
       fail-fast: false
 
-    env:
-      CCM_VERSION: 3.11.4
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -117,8 +118,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ matrix.NODE_VERSION }}
           cache: "npm"
+
+      - name: Resolve Cassandra latest patch version
+        env:
+          SERVER_VERSION: ${{ matrix.SERVER_VERSION }}
+        run: |
+          PATCH_SERVER_VERSION=$(
+            curl -s https://downloads.apache.org/cassandra/ \
+            | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=)' \
+            | sort -rV \
+            | uniq -w 3 \
+            | grep "^${SERVER_VERSION}\."
+          )
+          echo "Resolved Cassandra ${SERVER_VERSION}.x -> ${PATCH_SERVER_VERSION}"
+          echo "CCM_VERSION=$PATCH_SERVER_VERSION" >> "$GITHUB_ENV"
 
       - name: Print environment
         run: printenv | sort
