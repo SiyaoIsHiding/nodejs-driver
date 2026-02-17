@@ -167,6 +167,8 @@ jobs:
           path: artifacts
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: dorny/test-reporter@v2
         with:
-          files: "artifacts/**/*.json"
+          name: Node.js Driver Tests 
+          path: "artifacts/**/*.json"
+          reporter: mocha-json
