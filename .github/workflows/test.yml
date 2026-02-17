@@ -170,5 +170,5 @@ jobs:
         uses: dorny/test-reporter@v2
         with:
           name: Node.js Driver Tests 
-          path: "artifacts/**/*.json"
+          artifact: artifacts/**/*.json
           reporter: mocha-json
