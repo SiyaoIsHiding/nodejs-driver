@@ -141,14 +141,14 @@ jobs:
       - name: Run tests
         run: |
           npm install
-          npx mocha test/unit test/integration/short --recursive --exit --reporter json --reporter-option output=test-results.json
+          npx mocha test/unit test/integration/short --recursive --exit --reporter xunit --reporter-options output=test-results/results.xml
 
       - name: Upload Test Results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
           name: Test Results (Node.js ${{ matrix.NODE_VERSION }}, Cassandra ${{ matrix.SERVER_VERSION }})
-          path: test-results.json
+          path: test-results/results.xml
 
   publish-test-results:
     name: "Publish Tests Results"
@@ -167,8 +167,6 @@ jobs:
           path: artifacts
 
       - name: Publish Test Results
-        uses: dorny/test-reporter@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          name: Node.js Driver Tests 
-          artifact: artifacts/**/*.json
-          reporter: mocha-json
+          files: artifacts/**/*.xml
