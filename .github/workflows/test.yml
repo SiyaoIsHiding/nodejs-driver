@@ -141,14 +141,22 @@ jobs:
       - name: Run tests
         run: |
           npm install
-          npx mocha test/unit test/integration/short --recursive --exit --reporter xunit --reporter-options output=test-results/results.xml
+          npm install --no-save mocha-multi-reporters mocha-junit-reporter mochawesome
+          npx mocha test/unit test/integration/short --recursive --exit --reporter mocha-multi-reporters \
+            --reporter-options \
+          reporterEnabled=spec,mocha-junit-reporter,mochawesome,\
+          mochaJunitReporterReporterOptions.mochaFile=test-results/results.xml,\
+          mochawesomeReporterOptions.reportDir=test-results/html,\
+          mochawesomeReporterOptions.overwrite=false
 
       - name: Upload Test Results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
           name: Test Results (Node.js ${{ matrix.NODE_VERSION }}, Cassandra ${{ matrix.SERVER_VERSION }})
-          path: test-results/results.xml
+          path: |
+            test-results/results.xml
+            test-results/html
 
   publish-test-results:
     name: "Publish Tests Results"
