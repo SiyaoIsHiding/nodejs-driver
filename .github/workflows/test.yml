@@ -8,7 +8,7 @@ on:
       trace:
         description: "Enable verbose driver/ccm trace logging (sets TEST_TRACE=on)"
         type: boolean
-        default: false
+        default: true
 permissions:
   contents: read
   actions: read
