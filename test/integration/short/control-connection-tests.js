@@ -36,7 +36,13 @@ describe('ControlConnection', function () {
     afterEach(helper.ccmHelper.remove);
 
     it('should subscribe to SCHEMA_CHANGE events and refresh keyspace information', async () => {
-      const cc = newInstance({ refreshSchemaDelay: 100 });
+      const options = {};
+      options.logEmitter = (event, level, className, message, furtherInfo) =>
+        // eslint-disable-next-line 
+        console.log(`${new Date().toISOString()} [${level}] ${className}: ${message}`, furtherInfo || '');
+      options.refreshSchemaDelay = 100;
+
+      const cc = newInstance(options);
       const otherClient = new Client(helper.baseOptions);
 
       helper.afterThisTest(() => otherClient.shutdown());
