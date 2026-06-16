@@ -267,6 +267,14 @@ function newInstance(options, localConnections, remoteConnections) {
   options.pooling.heartBeatInterval = 0;
   options.pooling.coreConnectionsPerHost[types.distance.local] = localConnections || 2;
   options.pooling.coreConnectionsPerHost[types.distance.remote] = remoteConnections || 1;
+  if (helper.isTracing()) {
+    // Surface ControlConnection driver log events (refresh, reconnection, schema-change handling)
+    // with timestamps so the ordering of a reconnection's keyspace refresh relative to a DROP can
+    // be diagnosed. Enable by running the tests with TEST_TRACE=on.
+    options.logEmitter = (event, level, className, message, furtherInfo) =>
+      // eslint-disable-next-line no-console
+      console.log(`${new Date().toISOString()} [${level}] ${className}: ${message}`, furtherInfo || '');
+  }
   return new ControlConnection(options, new ProfileManager(options));
 }
 
