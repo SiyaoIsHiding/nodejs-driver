@@ -43,7 +43,11 @@ describe('ControlConnection', function () {
       options.refreshSchemaDelay = 100;
 
       const cc = newInstance(options);
-      const otherClient = new Client(helper.baseOptions);
+      const otherClient = new Client(utils.extend({}, helper.baseOptions, {
+        logEmitter: (event, level, className, message, furtherInfo) =>
+          // eslint-disable-next-line
+          console.log(`${new Date().toISOString()} [otherClient][${level}] ${className}: ${message}`, furtherInfo || '')
+      }));
 
       helper.afterThisTest(() => otherClient.shutdown());
       disposeAfter(cc);
@@ -160,7 +164,9 @@ describe('ControlConnection', function () {
     });
 
     it('should not break when refreshing concurrently', async () => {
-      const cc = newInstance();
+      const cc = newInstance({logEmitter: (event, level, className, message, furtherInfo) =>
+        // eslint-disable-next-line 
+        console.log(`${new Date().toISOString()} [${level}] ${className}: ${message}`, furtherInfo || '')});
       cc.options.policies.loadBalancing = new policies.loadBalancing.RoundRobinPolicy();
       disposeAfter(cc);
 
