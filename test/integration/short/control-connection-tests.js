@@ -164,9 +164,7 @@ describe('ControlConnection', function () {
     });
 
     it('should not break when refreshing concurrently', async () => {
-      const cc = newInstance({logEmitter: (event, level, className, message, furtherInfo) =>
-        // eslint-disable-next-line 
-        console.log(`${new Date().toISOString()} [${level}] ${className}: ${message}`, furtherInfo || '')});
+      const cc = newInstance();
       cc.options.policies.loadBalancing = new policies.loadBalancing.RoundRobinPolicy();
       disposeAfter(cc);
 
